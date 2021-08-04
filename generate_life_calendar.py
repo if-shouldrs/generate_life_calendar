@@ -4,7 +4,7 @@ import sys
 import os
 import cairo
 
-DOC_WIDTH = 1872   # 26 inches
+DOC_WIDTH = 1872  # 26 inches
 DOC_HEIGHT = 2880  # 40 inches
 DOC_NAME = "life_calendar.pdf"
 
@@ -38,6 +38,7 @@ NEWYEAR_COLOUR = (0.8, 0.8, 0.8)
 ARROW_HEAD_LENGTH = 36
 ARROW_HEAD_WIDTH = 8
 
+
 def parse_date(date):
     formats = ['%d/%m/%Y', '%d-%m-%Y']
     stripped = date.strip()
@@ -53,6 +54,7 @@ def parse_date(date):
     raise ValueError("Incorrect date format: must be dd-mm-yyyy or dd/mm/yyyy")
 
 def draw_square(ctx, pos_x, pos_y, fillcolour=(1, 1, 1)):
+
     """
     Draws a square at pos_x,pos_y
     """
@@ -67,9 +69,11 @@ def draw_square(ctx, pos_x, pos_y, fillcolour=(1, 1, 1)):
     ctx.set_source_rgb(*fillcolour)
     ctx.fill()
 
+
 def text_size(ctx, text):
     _, _, width, height, _, _ = ctx.text_extents(text)
     return width, height
+
 
 def is_current_week(now, month, day):
     end = now + datetime.timedelta(weeks=1)
@@ -79,6 +83,7 @@ def is_current_week(now, month, day):
     return (now <= date1 < end) or (now <= date2 < end)
 
 def draw_row(ctx, pos_y, birthdate, date):
+
     """
     Draws a row of 52 squares, starting at pos_y
     """
@@ -97,6 +102,7 @@ def draw_row(ctx, pos_y, birthdate, date):
         pos_x += BOX_SIZE + BOX_MARGIN
         date += datetime.timedelta(weeks=1)
 
+
 def draw_key_item(ctx, pos_x, pos_y, desc, colour):
     draw_square(ctx, pos_x, pos_y, fillcolour=colour)
     pos_x += BOX_SIZE + (BOX_SIZE / 2)
@@ -107,6 +113,7 @@ def draw_key_item(ctx, pos_x, pos_y, desc, colour):
     ctx.show_text(desc)
 
     return pos_x + w + (BOX_SIZE * 2)
+
 
 def draw_grid(ctx, date, birthdate):
     """
@@ -127,7 +134,7 @@ def draw_grid(ctx, date, birthdate):
     # draw week numbers above top row
     ctx.set_font_size(TINYFONT_SIZE)
     ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL,
-        cairo.FONT_WEIGHT_NORMAL)
+                         cairo.FONT_WEIGHT_NORMAL)
 
     pos_x = X_MARGIN
     pos_y = Y_MARGIN
@@ -140,7 +147,7 @@ def draw_grid(ctx, date, birthdate):
 
     ctx.set_font_size(TINYFONT_SIZE)
     ctx.select_font_face(FONT, cairo.FONT_SLANT_ITALIC,
-        cairo.FONT_WEIGHT_NORMAL)
+                         cairo.FONT_WEIGHT_NORMAL)
 
     for i in range(NUM_ROWS):
         # Generate string for current date
@@ -160,13 +167,14 @@ def draw_grid(ctx, date, birthdate):
         pos_y += BOX_SIZE + BOX_MARGIN
         date += datetime.timedelta(weeks=52)
 
+
 def gen_calendar(birthdate, title, filename):
     if len(title) > MAX_TITLE_SIZE:
         raise ValueError("Title can't be longer than %d characters"
-            % MAX_TITLE_SIZE)
+                         % MAX_TITLE_SIZE)
 
     # Fill background with white
-    surface = cairo.PDFSurface (filename, DOC_WIDTH, DOC_HEIGHT)
+    surface = cairo.PDFSurface(filename, DOC_WIDTH, DOC_HEIGHT)
     ctx = cairo.Context(surface)
 
     ctx.set_source_rgb(1, 1, 1)
@@ -174,7 +182,7 @@ def gen_calendar(birthdate, title, filename):
     ctx.fill()
 
     ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL,
-        cairo.FONT_WEIGHT_BOLD)
+                         cairo.FONT_WEIGHT_BOLD)
     ctx.set_source_rgb(0, 0, 0)
     ctx.set_font_size(BIGFONT_SIZE)
     w, h = text_size(ctx, title)
@@ -190,39 +198,39 @@ def gen_calendar(birthdate, title, filename):
     draw_grid(ctx, date, birthdate)
     ctx.show_page()
 
+
+def parse_date(date):
+    formats = ['%Y/%m/%d', '%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y']
+
+    for f in formats:
+        try:
+            ret = datetime.datetime.strptime(date.strip(), f)
+        except ValueError:
+            continue
+        else:
+            return ret
+
+    raise argparse.ArgumentTypeError("incorrect date format")
+
 def main():
-
-    def parse_date(date):
-        formats = ['%Y/%m/%d', '%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y']
-
-        for f in formats:
-            try:
-                ret = datetime.datetime.strptime(date.strip(), f)
-            except ValueError:
-                continue
-            else:
-                return ret
-
-        raise argparse.ArgumentTypeError("incorrect date format")
-
     parser = argparse.ArgumentParser(description='\nGenerate a personalized "Life '
-        ' Calendar", inspired by the calendar with the same name from the '
-        'waitbutwhy.com store')
+                                                 ' Calendar", inspired by the calendar with the same name from the '
+                                                 'waitbutwhy.com store')
 
     parser.add_argument(type=parse_date, dest='date', help='starting date; your birthday,'
-        'in either yyyy/mm/dd or dd/mm/yyyy format (dashes \'-\' may also be used in '
-        'place of slashes \'/\')')
+                                                           'in either yyyy/mm/dd or dd/mm/yyyy format (dashes \'-\' may also be used in '
+                                                           'place of slashes \'/\')')
 
     parser.add_argument('-f', '--filename', type=str, dest='filename',
-        help='output filename', default=DOC_NAME)
+                        help='output filename', default=DOC_NAME)
 
     parser.add_argument('-t', '--title', type=str, dest='title',
-        help='Calendar title text (default is "%s")' % DEFAULT_TITLE,
-        default=DEFAULT_TITLE)
+                        help='Calendar title text (default is "%s")' % DEFAULT_TITLE,
+                        default=DEFAULT_TITLE)
 
     parser.add_argument('-e', '--end', type=parse_date, dest='enddate',
-        help='end date; If this is set, then a calendar with a different start date'
-        ' will be generated for each day between the starting date and this date')
+                        help='end date; If this is set, then a calendar with a different start date'
+                             ' will be generated for each day between the starting date and this date')
 
     args = parser.parse_args()
 
@@ -251,6 +259,7 @@ def main():
             return
 
         print('Created %s' % doc_name)
+
 
 if __name__ == "__main__":
     main()
